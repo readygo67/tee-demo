@@ -1,0 +1,9 @@
+/target/
+/host/target/
+/loader/target/
+**/*.sgxs
+*.swp
+*.swo
+.DS_Store
+.env
+.env.*

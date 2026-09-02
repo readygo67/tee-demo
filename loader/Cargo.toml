@@ -1,0 +1,21 @@
+[package]
+name = "tee-demo-loader"
+version = "0.1.0"
+edition = "2021"
+description = "基于 enclave-runner 加载 Enclave，并将 worker-host 映射到 Host Unix Socket"
+
+[[bin]]
+name = "tee-demo-loader"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0"
+clap = "4.5"
+futures = { version = "0.3", features = ["compat", "io-compat"] }
+tokio = { version = "1", features = ["full"] }
+sgxs = "=0.8.0"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+aesm-client = { version = "=0.6.0", features = ["sgxs"] }
+enclave-runner = "=0.7.0"
+sgxs-loaders = "=0.5.0"
