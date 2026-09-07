@@ -24,6 +24,10 @@ client.sh ──> Unix Socket ──> tee-demo-host (Host 守护进程，监听)
 # Intel SGX 设备
 ls /dev/sgx_enclave
 
+# bubblewrap（PR-4 沙箱，可选）
+# Ubuntu/Debian: sudo apt install bubblewrap
+command -v bwrap
+
 # Rust SGX 目标
 rustup target add x86_64-fortanix-unknown-sgx
 
@@ -36,8 +40,9 @@ cargo install fortanix-sgx-tools
 ### 步骤 1：编译
 
 ```bash
-chmod +x build.sh build-host.sh build-loader.sh daemon.sh client.sh test.sh
-./build.sh release      # 编译 Enclave
+chmod +x build-runtime.sh build-host.sh build-loader.sh daemon.sh client.sh test.sh
+#./build-runtime.sh release   # 编译 Runtime（Enclave → .sgxs）
+./build-runtime.sh --production   # 生产签名 → keys/enclave.sig + .mrenclave
 ./build-host.sh         # 编译 Host 守护进程
 ./build-loader.sh       # 编译 SGX loader
 ```
@@ -54,6 +59,9 @@ loader/target/x86_64-unknown-linux-gnu/release/tee-demo-loader       # SGX loade
 
 ```bash
 ./daemon.sh start
+
+# 可选：Loader 经 bwrap 最小挂载启动
+TEE_SANDBOX=1 ./daemon.sh start
 ```
 
 Enclave 加载进 TEE 后持续运行，等待请求。
@@ -114,17 +122,20 @@ make stop    # 停止守护进程
 ```
 tee-demo/
 ├── .cargo/config.toml   # SGX 编译目标配置
-├── src/main.rs          # TEE 内计算逻辑（常驻循环）
+├── Cargo.toml           # workspace: runtime / protocol / host / loader
+├── runtime/             # SGX Enclave Runtime（crate: tee-demo）
+│   └── src/main.rs
+├── protocol/            # 共享协议帧
 ├── host/                # Host 守护进程（原生 Linux）
 │   └── src/main.rs
-├── loader/              # SGX loader（loader 连接 Host 监听的 socket）
+├── loader/              # SGX loader（多路复用）
 │   └── src/main.rs
-├── build.sh             # 编译 Enclave
+├── build-runtime.sh     # 编译 Runtime（可选 --production 签名）
 ├── build-host.sh        # 编译 Host 守护进程
 ├── build-loader.sh      # 编译 SGX loader
 ├── daemon.sh            # 启动/停止/状态
 ├── client.sh            # 发送计算请求
-├── test.sh              # 功能验证
+├── test.sh              # 集成测试（challenge/calc/rotate/sealing/sandbox）
 ├── Makefile
 └── README.md
 ```

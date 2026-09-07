@@ -5,4 +5,4 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-cargo build --release --manifest-path host/Cargo.toml --target x86_64-unknown-linux-gnu
+cargo build --release -p tee-demo-host --target x86_64-unknown-linux-gnu
