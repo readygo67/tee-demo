@@ -36,7 +36,7 @@ case "$cmd" in
             echo "守护进程已在运行，pid=$(cat "$PID_FILE")"
             exit 0
         fi
-        build_all
+        build_runtime
         ensure_run_dir
         echo "==> 启动 TEE 常驻守护进程..."
         EXTRA=()
