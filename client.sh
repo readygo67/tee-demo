@@ -1,23 +1,58 @@
 #!/usr/bin/env bash
-# 向常驻 TEE 发送计算请求
+# Client nonce challenge + DCAP verify + AEAD calc
+#
+# 用法:
+#   ./client.sh <x> <y>              # challenge + DCAP + HPKE calc
+#   ./client.sh challenge [HEX]      # 仅 challenge + 验证
+#   ./client.sh pubkey | rotate
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-HOST_BIN="$SCRIPT_DIR/host/target/x86_64-unknown-linux-gnu/release/tee-demo-host"
+HOST_BIN="$SCRIPT_DIR/target/x86_64-unknown-linux-gnu/release/tee-demo-host"
+SOCK="${TEE_SOCK:-/tmp/tee-demo.sock}"
+EXPECTED_MRE="${TEE_EXPECTED_MRENCLAVE:-}"
 
 usage() {
-    echo "用法: $0 <x> <y>"
-    echo "示例: $0 2 3"
+    echo "用法: $0 <x> <y>             # nonce challenge + DCAP + HPKE"
+    echo "      $0 challenge [hex]     # Client nonce challenge"
+    echo "      $0 pubkey | rotate"
     echo ""
-    echo "需先启动守护进程: ./daemon.sh start"
+    echo "环境变量: TEE_SOCK, TEE_EXPECTED_MRENCLAVE"
+    echo "需先启动: ./daemon.sh start"
     exit 1
 }
 
-[ "$#" -eq 2 ] || usage
-
 if [ ! -x "$HOST_BIN" ]; then
     echo "Host 未编译，正在构建..."
-    cargo build --release --manifest-path "$SCRIPT_DIR/host/Cargo.toml" --target x86_64-unknown-linux-gnu
+    cargo build --release -p tee-demo-host --target x86_64-unknown-linux-gnu
 fi
 
-"$HOST_BIN" calc "$1" "$2"
+mre_args=()
+if [ -n "$EXPECTED_MRE" ]; then
+    mre_args=(--expected-mrenclave "$EXPECTED_MRE")
+fi
+
+case "${1:-}" in
+    pubkey)
+        "$HOST_BIN" pubkey --socket "$SOCK"
+        ;;
+    rotate)
+        "$HOST_BIN" rotate --socket "$SOCK"
+        ;;
+    challenge)
+        if [ -n "${2:-}" ]; then
+            "$HOST_BIN" challenge --socket "$SOCK" --nonce "$2" "${mre_args[@]}"
+        else
+            "$HOST_BIN" challenge --socket "$SOCK" "${mre_args[@]}"
+        fi
+        ;;
+    ""|-h|--help)
+        usage
+        ;;
+    *)
+        X="$1"
+        Y="${2:-}"
+        [ -n "$Y" ] || usage
+        "$HOST_BIN" calc "$X" "$Y" --socket "$SOCK" "${mre_args[@]}"
+        ;;
+esac

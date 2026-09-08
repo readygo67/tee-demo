@@ -2,3 +2,15 @@
 name = "tee-demo-host"
 version = "0.1.0"
 edition = "2021"
+description = "Host daemon: AttestationRequest/ComputeRequest over multiplexed runtime socket"
+
+[[bin]]
+name = "tee-demo-host"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4.5", features = ["derive"] }
+tee-demo-protocol = { path = "../protocol", features = ["verify"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+base64 = "0.22"

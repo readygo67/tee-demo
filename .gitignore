@@ -1,6 +1,10 @@
-/target/
-/host/target/
-/loader/target/
+# Cargo 构建产物（workspace 根目录与各 crate）
+**/target/
+
+# keys/ 下的私钥和签名产物不入库
+keys/*.pem
+keys/*.sig
+keys/*.mrenclave
 **/*.sgxs
 *.swp
 *.swo

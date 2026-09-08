@@ -1,7 +1,7 @@
 .PHONY: build start stop run test clean
 
 build:
-	./build.sh release
+	./build-runtime.sh release
 	./build-host.sh
 	./build-loader.sh
 
@@ -19,4 +19,4 @@ test:
 
 clean:
 	cargo clean
-	rm -rf host/target loader/target
+	rm -rf target
